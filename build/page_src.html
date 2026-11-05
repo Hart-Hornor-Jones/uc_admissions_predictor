@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predicting UC admission rates from public school data</title>
+<script>// https://d3js.org v7.9.0 Copyright 2010-2023 Mike Bostock
+/*__D3__*/
+</script>
+<style>
+:root{
+  --surface:#fcfcfb; --page:#f9f9f7; --ink:#0b0b0b; --ink2:#52514e; --mut:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --blue:#2a78d6; --aqua:#1baf7a;
+  --border:rgba(11,11,11,0.10);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;}
+.wrap{max-width:1420px;margin:0 auto;padding:18px 22px 40px}
+h1{font-size:21px;margin:0 0 4px}
+.sub{color:var(--ink2);font-size:13.5px;margin:0 0 10px;max-width:1100px}
+details.defs{margin:0 0 14px;max-width:1100px}
+details.defs summary{cursor:pointer;color:var(--ink2);font-size:13px;font-weight:600}
+details.defs .body{font-size:12.5px;color:var(--ink2);margin-top:6px}
+details.defs dt{font-weight:600;color:var(--ink);float:left;clear:left;margin-right:6px}
+details.defs dd{margin:0 0 4px 0;overflow:hidden}
+.layout{display:grid;grid-template-columns:275px 1fr 305px;gap:14px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px}
+.card h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}
+.vgroup{margin:8px 0 2px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+label.v{display:flex;align-items:center;gap:7px;padding:4px 2px;font-size:13px;cursor:pointer;border-radius:4px}
+label.v:hover{background:#f1f0ec}
+label.v input{accent-color:var(--blue);width:15px;height:15px;flex:none}
+.hint{margin-left:auto;font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums;flex:none}
+.hint.big{color:#006300;font-weight:600}
+.presets{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 4px}
+.presets button{font-size:11.5px;padding:4px 9px;border:1px solid var(--axis);background:#fff;border-radius:12px;cursor:pointer;color:var(--ink2)}
+.presets button:hover{border-color:var(--ink2);color:var(--ink)}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.panel .head{display:flex;gap:6px;align-items:center;margin-bottom:4px;flex-wrap:wrap}
+.panel select{font-size:13px;padding:4px 5px;border:1px solid var(--axis);border-radius:5px;background:#fff;max-width:46%}
+.dotA{width:10px;height:10px;border-radius:50%;background:var(--blue);flex:none}
+.dotB{width:10px;height:10px;border-radius:50%;background:var(--aqua);flex:none}
+.stats{font-size:12.5px;color:var(--ink2);margin:2px 0 4px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-size:14px}
+.zoomnote{font-size:10.5px;color:var(--mut)}
+.zreset{font-size:10.5px;border:1px solid var(--axis);background:#fff;border-radius:10px;padding:1px 8px;cursor:pointer;color:var(--ink2);display:none;margin-left:8px}
+svg{display:block;width:100%;height:auto;touch-action:none}
+.axis text{fill:var(--mut);font-size:10.5px}
+.axis line,.axis path{stroke:var(--axis)}
+.gridline{stroke:var(--grid);stroke-width:.7}
+.ident{stroke:var(--ink);stroke-dasharray:4 3;stroke-width:1.1}
+.dot{stroke:none;opacity:.55;cursor:pointer}
+.dot.sel{opacity:1;stroke:var(--ink);stroke-width:1.6}
+table.coefs{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+table.coefs th{text-align:right;color:var(--ink2);font-weight:600;padding:3px 6px;border-bottom:1px solid var(--axis)}
+table.coefs th:first-child{text-align:left}
+table.coefs td{padding:2.5px 6px;text-align:right;border-bottom:1px solid var(--grid)}
+table.coefs td:first-child{text-align:left;color:var(--ink2)}
+.warn{font-size:11.5px;color:#8b3a3a;margin-top:6px}
+.school h4{margin:0 0 2px;font-size:14px}
+.school .meta{color:var(--mut);font-size:12px;margin-bottom:6px}
+.school table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+.school td{padding:2px 4px;border-bottom:1px solid var(--grid)}
+.school td:last-child{text-align:right}
+.big3{display:flex;gap:10px;margin:6px 0 8px}
+.big3 div{flex:1;background:#f4f3ef;border-radius:6px;padding:5px 8px}
+.big3 .k{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.big3 .n{font-size:16px;font-weight:650;font-variant-numeric:tabular-nums}
+.empty{color:var(--mut);font-size:12.5px}
+.foot{color:var(--mut);font-size:11.5px;margin-top:16px;max-width:1200px}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;
+  padding:4px 8px;border-radius:5px;opacity:0;z-index:10;max-width:260px}
+.notice{font-size:11.5px;color:var(--mut);margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:0 0 12px;font-size:13px;color:var(--ink2)}
+.controls label{display:flex;align-items:center;gap:6px}
+.controls select,.controls input{font:inherit;font-size:13px;padding:4px 5px;border:1px solid var(--axis);border-radius:5px;background:#fff;color:var(--ink)}
+.controls input{width:230px;max-width:100%}
+label.v.off{color:var(--mut);cursor:default}
+.dot.loc{stroke:var(--ink);stroke-width:.9;opacity:.85}
+table.coefs th.c{text-align:center}
+table.coefs tr.tot td{font-weight:650;color:var(--ink)}
+table.coefs td.sw{white-space:nowrap}
+@media (max-width: 980px){
+  .wrap{padding:12px 10px 30px}
+  .layout{grid-template-columns:1fr}
+  .panels{grid-template-columns:1fr}
+  #plotscol{order:1} #varbox{order:2} #schoolbox{order:3}
+  .panel select{max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Predicting UC admission rates from public school data</h1>
+  <p class="sub">Every dot below is a California public high school. Its height is the school's <b>actual admission
+  rate</b> to one University of California campus (admitted applicants as a share of all its applicants, three entering
+  classes pooled); its horizontal position is the rate <b>predicted</b> by a statistical model built from nothing but
+  public statistics about the school — no application files. You choose the model's ingredients on the left; the model
+  refits instantly. If the dots hug the dashed diagonal, the campus's decisions are largely reconstructible from those
+  school statistics; if they scatter, they are not. The two charts share your ingredient list but can show different
+  campuses or eras, side by side. Click any dot for the school behind it and the arithmetic of its prediction.
+  Scroll or pinch on a chart to zoom; double-click (or double-tap) to reset.</p>
+
+  <details class="defs"><summary>Definitions, method, and how to read the numbers</summary>
+    <div class="body"><dl>
+      <dt>Eras.</dt><dd>“2016–19 (test era)”: entering classes when SAT/ACT scores were required. “2023–25 (test-blind)”:
+      entering classes after the University of California stopped considering admission test scores. The transition years
+      2020–22 are excluded (a pandemic-disrupted admissions cycle, and state testing gaps).</dd>
+      <dt>The fit.</dt><dd>Weighted least squares — the standard technique that chooses the line (here, a weighted sum
+      of your selected variables plus a base rate) minimizing the squared prediction errors. Each school is weighted by
+      its number of applicants, so high-volume schools count for more and noisy small-school rates count for less.
+      Each variable is standardized first (converted to a z-score: how many standard deviations the school sits above
+      or below the applicant-weighted average school), so coefficients are comparable across variables.</dd>
+      <dt>R².</dt><dd>The share of school-to-school variation in admission rates that the model reproduces, from 0
+      (no better than guessing the average for everyone) to 1 (exact). “Adjusted R²” applies a small penalty for the
+      number of variables used. “Typical miss” is the root-mean-square prediction error, in percentage points.</dd>
+      <dt>Coefficients.</dt><dd>Percentage points of predicted admission rate per one standard deviation of the
+      variable, holding the other selected variables fixed; the parenthesized number is the standard error, a measure
+      of statistical uncertainty. When two selected variables are nearly duplicates, their individual coefficients are
+      not meaningful even though the prediction is — see the caution under the table.</dd>
+      <dt>Samples.</dt><dd>Schools with at least 30 pooled applicants to the campus. The University masks small counts
+      (fewer than 5 applicants or 3 admitted) in its published data; rates here are computed only from visible years,
+      and a school is dropped when most of its applicant volume is masked. A school also drops from a fit if it is
+      missing one of your selected variables — the “n” beside each chart updates.</dd>
+      <dt>Variables.</dt><dd><b>CAASPP</b>: California’s statewide grade-11 tests (share meeting the standard, from
+      each class’s junior-year spring). <b>A–G completion</b>: share of a school’s graduating class finishing the
+      course sequence required for University of California and California State University eligibility.
+      <b>UPP</b> (“unduplicated pupil percentage”): the state’s operational poverty measure — the share of students
+      who are low-income (free/reduced-price-meal eligible), English learners, or foster youth. <b>SED</b>: share of
+      grade-11 students classified socioeconomically disadvantaged. <b>EL</b>: share classified English learners.
+      <b>LCFF+ flag</b>: whether UPP is at least 75%, the statutory line above which a school draws concentration
+      funding under California’s Local Control Funding Formula — included so you can test whether crossing the official
+      line matters beyond poverty itself. School racial composition is from state enrollment counts (grades 9–12;
+      “Asian” includes the separate Filipino category). Neighborhood variables describe the census tract around the
+      school (American Community Survey 5-year estimates). <b>Applicant-pool GPA</b>: the mean UC-recalculated grade
+      point average of the school’s applicants, as published by the University. <b>Application rate</b>: applicants per
+      100 course-eligible seniors. <b>Past 6-year graduation</b>: how the school’s earlier students (entering
+      2004–10) fared after enrolling anywhere in the UC system. <b>Past yield</b>: of the school’s applicants admitted
+      to this campus in the five entry years preceding the era, the share who chose to enroll — a way to test whether
+      a school’s enrollment history feeds back into its admission odds.
+      <b>Distance to campus</b>: the straight-line distance from the school to the selected campus, on a logarithmic
+      scale (1.0 = 10 km, 2.0 = 100 km, 3.0 = 1,000 km), from state school-location records. Distance turns out to
+      matter a great deal at some campuses and not at all at others — try “Distance only” with San Diego in the
+      test era. <b>Charter school</b>: 1 if the school is a charter in state 2023–24 records, 0 if district-run;
+      the same flag is applied to both eras (charter status rarely changes, but conversions exist).
+      <b>Pool-GPA inflation</b>: how much the school’s applicant-pool GPA rose from the test era to the test-blind
+      era <i>beyond</i> what the change in its own test results (CAASPP) predicts, in GPA points — a school-level
+      grade-inflation measure. It is computed across the full 2016–2025 window, so in the test era read it as
+      “schools that went on to inflate.” It is available for the 969 highest-volume schools; selecting it
+      restricts the sample to them.</dd>
+      <dt>Model.</dt><dd>“Linear” is the weighted least squares fit described above (the default). “Logistic” fits the
+      log-odds of admission by iteratively reweighted least squares, a quasi-binomial fit in which each school’s admitted
+      count is its applicants times its admission rate, so predictions stay between 0 and 100%. Its coefficients are
+      log-odds per standard deviation (near a 25% admission rate, 0.1 in log-odds is about 2 percentage points), and its
+      standard errors allow for school-level variation beyond binomial chance. R² and typical miss are computed from the
+      fitted rates in percentage points for both models.</dd>
+      <dt>Fit model to.</dt><dd>“All schools” (the default) estimates the model on every school in the chart. “Schools
+      outside the campus’s county” estimates it without the local schools and then applies it to them, so their
+      actual-minus-predicted values are out-of-sample comparisons with similar schools elsewhere in California. Local
+      schools are those in the county of the chart’s campus (Alameda for Berkeley, Yolo for Davis, Orange for Irvine, and
+      so on; San Diego and Imperial counties for San Diego). The “Local school” indicator can be added to the model only
+      when it is fitted to all schools; it is left as 0 or 1 rather than standardized, so its coefficient is the
+      difference between local and other schools, the other selected variables held fixed.</dd>
+      <dt>View.</dt><dd>“Actual against predicted” is the chart described above. “Actual minus predicted, by distance”
+      puts each school’s actual-minus-predicted rate on the vertical axis against its distance to the campus on the
+      horizontal axis (log scale); the dashed line is zero difference.</dd>
+      <dt>Actual minus predicted, by group.</dt><dd>For a group of schools: the group’s admitted applicants divided by
+      its applicants, minus the applicant-weighted average of the predicted rates. “Admits above prediction” is that
+      difference times the group’s applicants. The standard error combines school-level scatter around the model
+      (estimated from the fitting sample) and uncertainty in the fitted coefficients.</dd>
+      <dt>Added variables.</dt><dd><b>GPA curvature</b> adds squared and cubed terms of the applicant-pool GPA (select it
+      with the GPA itself). <b>Applicant GPA relative to the other campuses</b>: the school’s applicant-pool GPA at this
+      campus minus the applicant-weighted mean of its applicant-pool GPAs at the other eight campuses, same era (the
+      University’s all-campus applicant pool is not in this page’s data, so this stands in for “relative to all UC
+      applicants”). <b>Campus share of the school’s applications</b>: the school’s applicants to this campus as a share
+      of its applicants to all nine campuses, same era (applications, not unique applicants). <b>Admission rate at the
+      other campuses</b>: the school’s admitted applicants divided by its applicants at the other eight campuses, same
+      era. These three use only the campus–era cells in which the school has at least 30 pooled applicants, so campuses
+      where it sent fewer are left out of the sums. <b>LCFF+ flag (UPP above 75%)</b>: the flag under the corrected
+      rule, computed from the UPP value shown (rounded to one decimal); it differs from the original flag only for
+      school-eras whose UPP rounds to exactly 75.0. <b>Local school</b>: 1 if the school is in the campus’s county (see
+      “Fit model to”). School counties are from the state public school directory.</dd>
+      <dt>Grey “+0.012” numbers.</dt><dd>Next to each unselected variable: how much R² would rise in the left chart’s
+      model if you added it. Green highlights a gain of 0.02 or more.</dd>
+    </dl></div>
+  </details>
+
+  <div class="controls" id="controls">
+    <label>Model <select id="selModel"><option value="lin">Linear</option><option value="logit">Logistic</option></select></label>
+    <label>Fit model to <select id="selFit"><option value="all">All schools</option><option value="out">Schools outside the campus’s county</option></select></label>
+    <label>View <select id="selView"><option value="pred">Actual against predicted</option><option value="dist">Actual minus predicted, by distance</option></select></label>
+    <label>Dots <select id="selDots"><option value="plain">All alike</option><option value="local">Outline local schools</option></select></label>
+    <label>Find a school <input type="text" id="find" list="schoollist" placeholder="type a name"><datalist id="schoollist"></datalist></label>
+  </div>
+
+  <div class="layout">
+    <div class="card" id="varbox">
+      <h3>Model variables</h3>
+      <div class="presets" id="presets"></div>
+      <div id="varlist"></div>
+      <div class="notice">Grey number = gain in R² if added to the left chart’s model.</div>
+    </div>
+
+    <div id="plotscol">
+      <div class="panels">
+        <div class="card panel" id="panelA"></div>
+        <div class="card panel" id="panelB"></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3 id="coefhead">Fitted coefficients — percentage points of admission rate per one standard deviation</h3>
+        <div class="notice" id="coefsub" style="margin:0 0 6px"></div>
+        <div id="coeftable"></div>
+        <div class="warn">Caution: when selected variables are strongly correlated (for example, UPP and SED measure
+        nearly the same thing, correlating at about 0.99), the fit can split one real effect between them in arbitrary
+        ways — even with opposite signs — without changing the predictions. Judge a variable by what it adds to R²,
+        not by its coefficient in a crowded model.</div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Actual minus predicted — local schools and the rest of California</h3>
+        <div class="notice" id="grpsub" style="margin:0 0 6px"></div>
+        <div style="overflow-x:auto" id="grptable"></div>
+      </div>
+    </div>
+
+    <div class="card school" id="schoolbox">
+      <h3>School</h3>
+      <div class="empty">Click a dot in either chart, or find a school by name above.</div>
+    </div>
+  </div>
+
+  <p class="foot"><b>Sources.</b> Admissions counts and applicant grade point averages: University of California
+  Information Center, “Admissions by source school” (California public high schools; freshman applicants). School
+  test results and grade-11 group enrollment: California Department of Education, CAASPP research files. Course-sequence
+  completion: California Department of Education A–G reports. Student poverty (UPP): California Department of
+  Education, cumulative enrollment / LCFF data. School racial composition: California Department of Education
+  enrollment by race/ethnicity, grades 9–12. Neighborhood measures: U.S. Census Bureau, American Community Survey
+  5-year estimates for the school’s census tract. Past graduation and enrollment outcomes: University of California
+  undergraduate outcomes by source school. School locations and charter status: California Department of
+  Education public school directory files. All data are public; schools are identified by their College Board (CEEB)
+  school codes. This page performs all calculations locally in your browser; nothing is transmitted.
+  <br>Updated July 2026: adds distance to campus, charter status, and a school-level grade-inflation measure.
+  <br>Updated November 2026: adds a logistic model, fitting with the campus’s local schools held out, a local-versus-other
+  comparison table, a distance view, school search, and further variables; school counties are from the state school
+  directory. Data behind the page: <a href="data/" style="color:inherit">data folder</a>.</p>
+</div>
+<div class="tip" id="tip"></div>
+
+<script id="lottdata" type="application/json">/*__DATA__*/</script>
+<script id="countydata" type="application/json">/*__COUNTY__*/</script>
+<script>
+(function(){
+const DATA = JSON.parse(document.getElementById('lottdata').textContent);
+const COUNTY = JSON.parse(document.getElementById('countydata').textContent);
+const COLS = DATA.cols;
+const CI = Object.fromEntries(COLS.map((c,i)=>[c,i]));
+// Columns derived in the browser from the embedded data (appended to every row at load).
+['K','county','local','oth_rate','share','gpa_rel','lcff75'].forEach(c=>{ CI[c]=COLS.length; COLS.push(c); });
+// The "local" schools of each campus: the campus's own county (plus Imperial County for San Diego).
+const LOCAL = {
+  'Berkeley':['Alameda'], 'Los Angeles':['Los Angeles'], 'San Diego':['San Diego','Imperial'], 'Davis':['Yolo'],
+  'Irvine':['Orange'], 'Santa Barbara':['Santa Barbara'], 'Santa Cruz':['Santa Cruz'], 'Riverside':['Riverside'], 'Merced':['Merced']
+};
+const localText = campus => (LOCAL[campus]||[]).map(c=>c+' County').join(' and ');
+(function derive(){
+  const byEra={};
+  Object.keys(DATA.cells).forEach(key=>{ const [camp,era]=key.split('|'); const m=byEra[era]=byEra[era]||new Map();
+    DATA.cells[key].forEach(r=>{ if(!m.has(r[CI.ceeb])) m.set(r[CI.ceeb],{}); m.get(r[CI.ceeb])[camp]=r; }); });
+  Object.keys(DATA.cells).forEach(key=>{ const [camp,era]=key.split('|'); const LC=LOCAL[camp]||[];
+    DATA.cells[key].forEach(r=>{
+      const A=r[CI.A], cty=COUNTY[r[CI.ceeb]]||null;
+      const others=Object.entries(byEra[era].get(r[CI.ceeb])).filter(([c])=>c!==camp).map(([,x])=>x);
+      let oA=0,oK=0,gA=0,gS=0;
+      others.forEach(x=>{ oA+=x[CI.A]; oK+=x[CI.A]*x[CI.adm]/100; if(x[CI.appgpa]!=null){ gA+=x[CI.A]; gS+=x[CI.A]*x[CI.appgpa]; } });
+      r[CI.K]=A*r[CI.adm]/100;
+      r[CI.county]=cty;
+      r[CI.local]=cty==null?null:(LC.includes(cty)?1:0);
+      r[CI.oth_rate]=oA>0?+(100*oK/oA).toFixed(2):null;
+      r[CI.share]=+(100*A/(A+oA)).toFixed(2);
+      r[CI.gpa_rel]=(gA>0&&r[CI.appgpa]!=null)?+(r[CI.appgpa]-gS/gA).toFixed(3):null;
+      r[CI.lcff75]=r[CI.upp]==null?null:(r[CI.upp]>75?1:0);
+    }); });
+})();
+const VMETA = {
+  ela:['CAASPP English — % met (gr 11)','Achievement'], math:['CAASPP Math — % met (gr 11)','Achievement'],
+  agcomp:['A–G course-sequence completion %','Achievement'],
+  upp:['Student poverty — UPP %','Student body'], sed:['Socioec. disadvantaged — % of gr 11','Student body'],
+  el:['English learners — % of gr 11','Student body'], lcffd:['LCFF+ flag (UPP ≥ 75%)','Student body'],
+  lcff75:['LCFF+ flag (UPP above 75%)','Student body'],
+  s_hisp:['Hispanic/Latino students %','Student body'], s_white:['White students %','Student body'],
+  s_asian:['Asian or Filipino students %','Student body'], s_black:['Black students %','Student body'],
+  inc:['Median household income ($1,000s)','Neighborhood (census tract)'], ba:['Adults with bachelor’s degree %','Neighborhood (census tract)'],
+  pov:['Poverty rate %','Neighborhood (census tract)'], homeval:['Median home value ($1,000s)','Neighborhood (census tract)'],
+  appgpa:['Applicant-pool mean GPA','Applicant pool & size'],
+  gpacurve:['GPA curvature (squared and cubed terms)','Applicant pool & size'],
+  gpa_rel:['Applicant GPA relative to the other campuses','Applicant pool & size'],
+  apprate:['Applicants per 100 eligible seniors','Applicant pool & size'],
+  share:['Campus share of the school’s applications %','Applicant pool & size'],
+  logA:['Applicant volume (log scale)','Applicant pool & size'], H:['Enrollment, grades 9–12','Applicant pool & size'],
+  oth_rate:['Admission rate at the other campuses %','Other campuses'],
+  o_grad6:['Past 6-yr graduation of UC entrants %','History with the university'],
+  o_yield:['Past yield at this campus %','History with the university'],
+  dist:['Distance to campus (log₁₀ km)','Geography'],
+  local:['Local school (campus county = 1)','Geography'],
+  charter:['Charter school (district = 0, charter = 1)','Student body'],
+  infl:['Pool-GPA inflation, 2016→2025','Applicant pool & size']
+};
+const VARS = ['ela','math','agcomp','upp','sed','el','lcffd','lcff75','s_hisp','s_white','s_asian','s_black','charter',
+  'inc','ba','pov','homeval','appgpa','gpacurve','gpa_rel','apprate','share','logA','H','infl','oth_rate','o_grad6','o_yield','dist','local'];
+const GROUPS = ['Achievement','Student body','Neighborhood (census tract)','Geography','Applicant pool & size','Other campuses','History with the university'];
+const INAREA = new Set(['local']);          // only available when the model is fitted to all schools
+const BINS = new Set(['local']);            // left as 0/1 rather than standardized
+const PRESETS = [
+  ['Poverty only',['sed']],
+  ['Poverty + LCFF+ flag',['sed','lcffd']],
+  ['Poverty + composition',['sed','s_hisp','s_black']],
+  ['Achievement only',['ela','math','agcomp']],
+  ['Distance only',['dist']],
+  ['Everything',DATA.vars.slice()]
+];
+const state = {
+  sel:new Set(['sed']),
+  A:{campus:'San Diego', era:'post'}, B:{campus:'San Diego', era:'pre'},
+  pick:null, model:'lin', fitOn:'all', view:'pred', dots:'plain'
+};
+
+// ---------- design matrix ----------
+function specs(vars){
+  const out=[];
+  vars.forEach(v=>{
+    if(v==='gpacurve'){
+      out.push({key:'gpa2',label:'Applicant-pool GPA, squared term',derived:true,get:r=>r[CI.appgpa]==null?null:(r[CI.appgpa]-3.9)**2});
+      out.push({key:'gpa3',label:'Applicant-pool GPA, cubed term',derived:true,get:r=>r[CI.appgpa]==null?null:(r[CI.appgpa]-3.9)**3});
+    } else out.push({key:v,label:VMETA[v][0],bin:BINS.has(v),get:r=>r[CI[v]]});
+  });
+  return out;
+}
+
+// ---------- linear algebra ----------
+function solve(M,v){
+  const n=v.length, A=M.map((r,i)=>r.concat([v[i]]));
+  for(let c=0;c<n;c++){
+    let p=c; for(let r=c+1;r<n;r++) if(Math.abs(A[r][c])>Math.abs(A[p][c])) p=r;
+    if(Math.abs(A[p][c])<1e-12) return null;
+    [A[c],A[p]]=[A[p],A[c]];
+    for(let r=0;r<n;r++){ if(r===c) continue;
+      const f=A[r][c]/A[c][c];
+      for(let k=c;k<=n;k++) A[r][k]-=f*A[c][k]; }
+  }
+  return A.map((r,i)=>r[n]/A[i][i]);
+}
+function inverse(M){
+  const n=M.length,out=[];
+  for(let j=0;j<n;j++){ const e=Array(n).fill(0); e[j]=1;
+    const col=solve(M,e); if(!col) return null;
+    for(let i=0;i<n;i++){ (out[i]=out[i]||[])[j]=col[i]; } }
+  return out;
+}
+const sig=x=>1/(1+Math.exp(-x));
+// fit(rows, vars): the model is estimated on the fitting sample (all complete rows, or the non-local ones when
+// "fit model to" is set to schools outside the county) and predictions are returned for every complete row.
+function fit(rows, vars, opt){
+  opt=opt||{};
+  const model=opt.model||state.model, fitOn=opt.fitOn||state.fitOn;
+  const S=specs(vars), k=S.length;
+  const use = rows.filter(r=>S.every(s=>s.get(r)!=null));
+  const est = fitOn==='out' ? use.filter(r=>r[CI.local]!==1) : use;
+  const n=est.length;
+  if(n<k+3) return {ok:false, n};
+  const w=est.map(r=>r[CI.A]), y=est.map(r=>r[CI.adm]);
+  const W=d3.sum(w);
+  const mom=S.map(s=>{ const x=est.map(s.get);
+    const m=d3.sum(x.map((xi,i)=>xi*w[i]))/W;
+    if(s.bin) return {m:0,s:(m>0&&m<1)?1:0,bin:true};
+    const sd=Math.sqrt(d3.sum(x.map((xi,i)=>w[i]*(xi-m)*(xi-m)))/W)||1;
+    return {m,s:sd}; });
+  if(mom.some(m=>m.s===0)) return {ok:false,n,why:'A selected indicator does not vary among the schools used for fitting.'};
+  const row=r=>[1,...S.map((s,j)=>(s.get(r)-mom[j].m)/mom[j].s)];
+  const X=est.map(row);
+  const p=k+1;
+  const XtWXof=(wt)=>{ const M=Array.from({length:p},()=>Array(p).fill(0));
+    for(let i=0;i<n;i++){ const xi=X[i], wi=wt[i];
+      for(let a=0;a<p;a++){ for(let b=a;b<p;b++) M[a][b]+=wi*xi[a]*xi[b]; } }
+    for(let a=0;a<p;a++) for(let b=0;b<a;b++) M[a][b]=M[b][a];
+    return M; };
+  let beta, se, cov, pe, sigma2=null, phi=null;
+  if(model==='lin'){
+    const XtWX=XtWXof(w);
+    const XtWy=Array(p).fill(0);
+    for(let i=0;i<n;i++){ const xi=X[i], wi=w[i]; for(let a=0;a<p;a++) XtWy[a]+=wi*xi[a]*y[i]; }
+    for(let a=0;a<p;a++) XtWX[a][a]+=1e-9;
+    beta=solve(XtWX.map(r=>r.slice()),XtWy.slice());
+    if(!beta) return {ok:false,n,why:'Selected variables are exact duplicates of one another.'};
+    pe=X.map(xi=>d3.sum(xi.map((x,j)=>x*beta[j])));
+    const sse=d3.sum(y.map((yi,i)=>w[i]*(yi-pe[i])**2));
+    const sig2=sse/(n-k-1)*(n/W);
+    sigma2=sse/(n-k-1);
+    const inv=inverse(XtWX.map(r=>r.map(x=>x*(n/W))));
+    cov=inv?inv.map(r=>r.map(x=>x*sig2)):null;
+    se=inv?inv.map((r,i)=>Math.sqrt(Math.max(0,sig2*r[i]))):beta.map(()=>NaN);
+  } else {
+    const K=est.map(r=>r[CI.K]); const Kt=d3.sum(K);
+    beta=Array(p).fill(0); beta[0]=Math.log(Kt/(W-Kt));
+    for(let it=0;it<40;it++){
+      const eta=X.map(xi=>d3.sum(xi.map((x,j)=>x*beta[j])));
+      const mu=eta.map(sig); const wt=mu.map((m,i)=>Math.max(w[i]*m*(1-m),1e-9));
+      const z=eta.map((e,i)=>e+(K[i]-w[i]*mu[i])/wt[i]);
+      const M=XtWXof(wt); for(let a=0;a<p;a++) M[a][a]+=1e-9; const v=Array(p).fill(0);
+      for(let i=0;i<n;i++) for(let a=0;a<p;a++) v[a]+=wt[i]*X[i][a]*z[i];
+      const nb=solve(M.map(r=>r.slice()),v); if(!nb) return {ok:false,n,why:'Selected variables are exact duplicates of one another.'};
+      const d=d3.max(nb.map((b,j)=>Math.abs(b-beta[j]))); beta=nb; if(d<1e-8) break;
+    }
+    const mu=X.map(xi=>sig(d3.sum(xi.map((x,j)=>x*beta[j]))));
+    phi=d3.sum(est.map((r,i)=>((r[CI.K]-w[i]*mu[i])**2)/(w[i]*mu[i]*(1-mu[i]))))/(n-p);
+    const M=XtWXof(mu.map((m,i)=>w[i]*m*(1-m))); for(let a=0;a<p;a++) M[a][a]+=1e-9;
+    const inv=inverse(M);
+    cov=inv?inv.map(r=>r.map(x=>x*Math.max(phi,1))):null;
+    se=cov?cov.map((r,i)=>Math.sqrt(Math.max(0,r[i]))):beta.map(()=>NaN);
+    pe=mu.map(m=>100*m);
+  }
+  const predOf=r=>{ const x=row(r), e=d3.sum(x.map((v,j)=>v*beta[j])); return model==='lin'?e:100*sig(e); };
+  const pred = use===est ? pe : use.map(predOf);
+  const ybar=d3.sum(y.map((yi,i)=>yi*w[i]))/W;
+  const sse=d3.sum(y.map((yi,i)=>w[i]*(yi-pe[i])**2));
+  const sst=d3.sum(y.map((yi,i)=>w[i]*(yi-ybar)**2));
+  const r2=1-sse/sst;
+  const adj=1-(1-r2)*(n-1)/(n-k-1);
+  const rmse=Math.sqrt(sse/W);
+  return {ok:true,n,k,S,beta,se,cov,r2,adj,rmse,pred,use,est,mom,row,vars,ybar,model,fitOn,sigma2,phi};
+}
+
+// group summary: actual minus predicted, with standard error, for local / other / all schools
+const GSETS=[['local',r=>r[CI.local]===1],['other',r=>r[CI.local]!==1],['all',()=>true]];
+function groupSummary(F){
+  return GSETS.map(([g,test])=>{
+    const idx=[]; F.use.forEach((r,i)=>{ if(test(r)) idx.push(i); });
+    if(!idx.length) return {g,n:0};
+    const A=d3.sum(idx,i=>F.use[i][CI.A]), K=d3.sum(idx,i=>F.use[i][CI.K]);
+    const act=100*K/A, pr=d3.sum(idx,i=>F.use[i][CI.A]*F.pred[i])/A, d=act-pr;
+    const p=F.beta.length; let v=0; const gv=Array(p).fill(0);
+    if(F.model==='lin'){
+      v=F.sigma2/A;
+      idx.forEach(i=>{ const x=F.row(F.use[i]); for(let a=0;a<p;a++) gv[a]+=F.use[i][CI.A]*x[a]/A; });
+    } else {
+      idx.forEach(i=>{ const m=F.pred[i]/100, a0=F.use[i][CI.A]; v+=Math.max(F.phi,1)*a0*m*(1-m);
+        const x=F.row(F.use[i]); for(let a=0;a<p;a++) gv[a]+=100*a0*m*(1-m)*x[a]/A; });
+      v=v/(A*A)*1e4;
+    }
+    let pv=0; if(F.cov) for(let a=0;a<p;a++) for(let b=0;b<p;b++) pv+=gv[a]*F.cov[a][b]*gv[b];
+    return {g,n:idx.length,A,K,act,pr,d,se:Math.sqrt(v+pv),extra:d*A/100};
+  });
+}
+
+// ---------- global controls ----------
+function control(id,key,after){
+  const el=document.getElementById(id); el.value=state[key];
+  el.addEventListener('change',function(){ state[key]=this.value; after&&after(); update(); });
+}
+control('selModel','model');
+control('selFit','fitOn',()=>{ if(state.fitOn==='out'){ state.sel.delete('local'); } syncChecks(); });
+control('selView','view',()=>{ PA.z=d3.zoomIdentity; PB.z=d3.zoomIdentity; });
+control('selDots','dots');
+
+// ---------- variable panel ----------
+const varlist=d3.select('#varlist');
+function syncChecks(){
+  varlist.selectAll('input').property('checked', function(){ return state.sel.has(this.dataset.v); });
+  varlist.selectAll('label.v').classed('off',function(){ return state.fitOn==='out'&&INAREA.has(this.dataset.v); })
+    .select('input').property('disabled',function(){ return state.fitOn==='out'&&INAREA.has(this.dataset.v); });
+}
+function buildVars(){
+  varlist.selectAll('*').remove();
+  GROUPS.forEach(g=>{
+    varlist.append('div').attr('class','vgroup').text(g);
+    VARS.filter(v=>VMETA[v][1]===g).forEach(v=>{
+      const lab=varlist.append('label').attr('class','v').attr('data-v',v)
+        .attr('title',INAREA.has(v)?'Available when the model is fitted to all schools':VMETA[v][0]);
+      lab.append('input').attr('type','checkbox').attr('data-v',v).property('checked',state.sel.has(v))
+        .on('change',function(){
+          if(this.checked){ state.sel.add(v); if(v==='gpacurve') state.sel.add('appgpa'); }
+          else { state.sel.delete(v); if(v==='appgpa') state.sel.delete('gpacurve'); }
+          syncChecks(); update(); });
+      lab.append('span').text(VMETA[v][0]);
+      lab.append('span').attr('class','hint').attr('id','hint-'+v);
+    });
+  });
+}
+buildVars();
+d3.select('#presets').selectAll('button').data(PRESETS).join('button')
+  .text(d=>d[0])
+  .on('click',(ev,d)=>{ state.sel=new Set(d[1]); syncChecks(); update(); });
+
+// ---------- panels ----------
+const PW=470,PH=380,M={t:8,r:12,b:38,l:44};
+function panelInit(id, which, color){
+  const div=d3.select('#'+id);
+  const head=div.append('div').attr('class','head');
+  head.append('div').attr('class', which==='A'?'dotA':'dotB');
+  const selC=head.append('select');
+  selC.selectAll('option').data(DATA.campuses).join('option').attr('value',d=>d).text(d=>d);
+  const selE=head.append('select');
+  selE.selectAll('option').data(Object.keys(DATA.eras)).join('option').attr('value',d=>d).text(d=>DATA.eras[d]);
+  selC.property('value',state[which].campus); selE.property('value',state[which].era);
+  selC.on('change',function(){state[which].campus=this.value; P.z=d3.zoomIdentity; update();});
+  selE.on('change',function(){state[which].era=this.value; P.z=d3.zoomIdentity; update();});
+  const stat=div.append('div').attr('class','stats').attr('id','stats'+which);
+  const svg=div.append('svg').attr('viewBox',`0 0 ${PW} ${PH}`);
+  svg.append('clipPath').attr('id','clip'+which).append('rect')
+    .attr('x',M.l).attr('y',M.t).attr('width',PW-M.l-M.r).attr('height',PH-M.t-M.b);
+  const g=svg.append('g');
+  g.append('g').attr('class','grid');
+  g.append('g').attr('class','gx axis');
+  g.append('g').attr('class','gy axis');
+  const inner=g.append('g').attr('clip-path',`url(#clip${which})`);
+  inner.append('line').attr('class','ident');
+  inner.append('g').attr('class','dots');
+  const xt=svg.append('text').attr('x',PW/2).attr('y',PH-4).attr('text-anchor','middle')
+    .attr('fill','var(--ink2)').attr('font-size',11.5).text('predicted admission rate (%)');
+  const yt=svg.append('text').attr('transform',`translate(11,${PH/2}) rotate(-90)`).attr('text-anchor','middle')
+    .attr('fill','var(--ink2)').attr('font-size',11.5).text('actual admission rate (%)');
+  const foot=div.append('div');
+  foot.append('span').attr('class','zoomnote').text('scroll / pinch to zoom · double-click to reset');
+  const zr=foot.append('button').attr('class','zreset').text('reset zoom');
+  const P={svg,g,color,which,z:d3.zoomIdentity,F:null,x:null,y:null,zr,xt,yt};
+  P.zoom=d3.zoom().scaleExtent([1,40])
+    .on('zoom',(ev)=>{ P.z=ev.transform; render(P); });
+  svg.call(P.zoom).on('dblclick.zoom',()=>{ svg.transition().duration(200).call(P.zoom.transform, d3.zoomIdentity); });
+  zr.on('click',()=>{ P.svg.transition().duration(200).call(P.zoom.transform, d3.zoomIdentity); });
+  return P;
+}
+const PA=panelInit('panelA','A','var(--blue)'), PB=panelInit('panelB','B','var(--aqua)');
+const tip=d3.select('#tip');
+
+const KM_TICKS=[1,3,10,30,100,300,1000].map(Math.log10);
+function xval(d){ return state.view==='pred'?d.p:d.r[CI.dist]; }
+function yval(d){ return state.view==='pred'?d.r[CI.adm]:d.r[CI.adm]-d.p; }
+function render(P){
+  const F=P.F; if(!F||!F.ok) return;
+  const x=P.z.rescaleX(P.x), y=P.z.rescaleY(P.y);
+  const xa=state.view==='pred'?d3.axisBottom(x).ticks(6).tickSize(3)
+    :d3.axisBottom(x).tickValues(KM_TICKS.filter(t=>t>=x.domain()[0]-1e-9&&t<=x.domain()[1]+1e-9)).tickFormat(t=>d3.format(',')(Math.round(10**t))).tickSize(3);
+  P.g.select('.gx').attr('transform',`translate(0,${PH-M.b})`).call(xa);
+  P.g.select('.gy').attr('transform',`translate(${M.l},0)`).call(d3.axisLeft(y).ticks(6).tickSize(3));
+  P.g.select('.grid').selectAll('line').data(y.ticks(6)).join('line').attr('class','gridline')
+    .attr('x1',M.l).attr('x2',PW-M.r).attr('y1',d=>y(d)).attr('y2',d=>y(d));
+  if(state.view==='pred'){
+    const lo=Math.max(x.domain()[0],y.domain()[0]), hi=Math.min(x.domain()[1],y.domain()[1]);
+    P.g.select('.ident').attr('x1',x(lo)).attr('y1',y(lo)).attr('x2',x(hi)).attr('y2',y(hi));
+  } else {
+    P.g.select('.ident').attr('x1',x(x.domain()[0])).attr('x2',x(x.domain()[1])).attr('y1',y(0)).attr('y2',y(0));
+  }
+  P.g.select('.dots').selectAll('circle')
+    .attr('cx',d=>x(xval(d))).attr('cy',d=>y(yval(d)));
+  P.zr.style('display', P.z.k>1.02 ? 'inline-block':'none');
+}
+
+function drawPanel(P, F){
+  P.F=F;
+  const sid='#stats'+P.which, cfg=state[P.which];
+  if(!F.ok){ d3.select(sid).html('<b>'+(F.why||'Too few schools with all selected variables')+'</b> — remove a sparse variable.');
+    P.g.select('.dots').selectAll('*').remove(); return; }
+  let D=F.use.map((r,i)=>({r,p:F.pred[i]}));
+  if(state.view==='pred'){
+    const hi=Math.max(d3.max(F.use,r=>r[CI.adm]), d3.max(F.pred))*1.04;
+    P.x=d3.scaleLinear().domain([Math.max(0,Math.min(0,d3.min(F.pred))),hi]).range([M.l,PW-M.r]);
+    P.y=d3.scaleLinear().domain([0,hi]).range([PH-M.b,M.t]);
+    P.xt.text('predicted admission rate (%)'); P.yt.text('actual admission rate (%)');
+  } else {
+    D=D.filter(d=>d.r[CI.dist]!=null);
+    const ext=d3.extent(D,d=>d.r[CI.adm]-d.p), m=Math.max(Math.abs(ext[0]||0),Math.abs(ext[1]||0),1)*1.05;
+    const dx=d3.extent(D,d=>d.r[CI.dist]);
+    P.x=d3.scaleLinear().domain([Math.max(0,(dx[0]||0)-0.05),(dx[1]||3)+0.05]).range([M.l,PW-M.r]);
+    P.y=d3.scaleLinear().domain([-m,m]).range([PH-M.b,M.t]);
+    P.xt.text(`distance to ${cfg.campus} (km, log scale)`); P.yt.text('actual minus predicted (percentage points)');
+  }
+  let stat=`<b>R² = ${F.r2.toFixed(3)}</b> &nbsp; adjusted ${F.adj.toFixed(3)} &nbsp; n = ${F.n.toLocaleString()} schools &nbsp; typical miss ${F.rmse.toFixed(1)} pp`;
+  if(F.model!=='lin'||F.fitOn!=='all'){
+    stat+=`<br>${F.model==='lin'?'Linear':'Logistic'} model, fitted to ${F.fitOn==='out'?'schools outside '+localText(cfg.campus):'all schools'}; ${F.use.length.toLocaleString()} schools shown`;
+  }
+  d3.select(sid).html(stat);
+  const dots=P.g.select('.dots').selectAll('circle').data(D, d=>d.r[CI.ceeb]);
+  dots.join('circle').attr('class','dot').attr('r',3.4).attr('fill',P.color)
+    .classed('loc',d=>state.dots==='local'&&d.r[CI.local]===1)
+    .classed('sel',d=>state.pick&&state.pick.ceeb===d.r[CI.ceeb])
+    .on('mousemove',(ev,d)=>{ tip.style('opacity',1).style('left',(ev.clientX+12)+'px').style('top',(ev.clientY-10)+'px')
+        .html(`<b>${d.r[CI.name]}</b><br>actual ${d.r[CI.adm].toFixed(1)}% · predicted ${d.p.toFixed(1)}%`); })
+    .on('mouseleave',()=>tip.style('opacity',0))
+    .on('click',(ev,d)=>{ state.pick={ceeb:d.r[CI.ceeb], panel:P.which}; refreshPick(); });
+  if(state.dots==='local') P.g.select('.dots').selectAll('circle').filter(d=>d.r[CI.local]===1).raise();
+  render(P);
+}
+
+function refreshPick(){
+  [PA,PB].forEach(P=>P.g.select('.dots').selectAll('circle')
+    .classed('sel',d=>state.pick&&state.pick.ceeb===d.r[CI.ceeb]));
+  schoolBox(PA.F,PB.F,curVars());
+}
+
+const fpp=(x,dp=1)=>{ if(x==null||!isFinite(x)) return '—'; const v=+x.toFixed(dp); return (v>=0?'+':'')+v.toFixed(dp); };
+function coefTable(FA,FB,vars){
+  const lin=state.model==='lin';
+  d3.select('#coefhead').text(lin?'Fitted coefficients — percentage points of admission rate per one standard deviation'
+    :'Fitted coefficients — log-odds of admission per one standard deviation');
+  const S=FA.ok?FA.S:(FB.ok?FB.S:specs(vars));
+  const anyBin=S.some(s=>s.bin);
+  d3.select('#coefsub').text(anyBin?'The local-school indicator is not standardized: its coefficient is the difference between local and other schools, the other selected variables held fixed'+(lin?'.':', in log-odds.'):'');
+  const rows=S.map((s,j)=>({s,
+    a:FA.ok?FA.beta[j+1]:null, ase:FA.ok?FA.se[j+1]:null,
+    b:FB.ok?FB.beta[j+1]:null, bse:FB.ok?FB.se[j+1]:null}));
+  rows.sort((p,q)=>Math.abs(q.a??0)-Math.abs(p.a??0));
+  const dp=lin?2:3;
+  const f=(x,se)=>x==null?'—':`${x>=0?'+':''}${x.toFixed(dp)} <span style="color:var(--mut)">(${se.toFixed(dp)})</span>`;
+  let h='<table class="coefs"><tr><th>variable</th><th>left chart — coefficient (std. error)</th><th>right chart — coefficient (std. error)</th></tr>';
+  const base=F=>!F.ok?'—':(lin?F.beta[0].toFixed(1):(100*sig(F.beta[0])).toFixed(1));
+  h+=`<tr><td>base rate (weighted average, %)</td><td>${base(FA)}</td><td>${base(FB)}</td></tr>`;
+  rows.forEach(r=>{ h+=`<tr><td>${r.s.label}</td><td>${f(r.a,r.ase)}</td><td>${f(r.b,r.bse)}</td></tr>`; });
+  d3.select('#coeftable').html(h+'</table>');
+}
+
+function grpTable(FA,FB){
+  const cfgs=[state.A,state.B], Fs=[FA,FB], labs=['Left chart','Right chart'];
+  const S=Fs.map(F=>F.ok?groupSummary(F):null);
+  const fitTxt=state.fitOn==='out'
+    ?'The model is fitted to schools outside the campus’s county and then applied to the local schools, so the local row compares them with similar schools elsewhere in California; the other-schools row is near zero by construction.'
+    :'The model is fitted to all schools, so these values are in-sample residuals and the all-schools row is zero by construction; fit the model to schools outside the county for an out-of-sample comparison, or add the local-school indicator to the model to estimate the difference as a coefficient.';
+  d3.select('#grpsub').text('Difference = actual minus predicted admission rate, in percentage points; standard errors in parentheses. “Admits above prediction” is the difference times the group’s applicants. '+fitTxt);
+  let h=`<table class="coefs"><tr><th></th>${labs.map((l,i)=>`<th colspan="5" class="c">${l} — ${cfgs[i].campus}, ${DATA.eras[cfgs[i].era]}</th>`).join('')}</tr>
+  <tr><th>schools</th>${labs.map(()=>['n','actual %','predicted %','difference (s.e.)','admits above prediction'].map(t=>`<th>${t}</th>`).join('')).join('')}</tr>`;
+  GSETS.forEach(([g],gi)=>{
+    const name=g==='local'?'Local schools (campus county)':g==='other'?'Other California schools':'All schools';
+    h+=`<tr${g==='all'?' class="tot"':''}><td>${name}</td>`;
+    S.forEach(s=>{ const o=s&&s[gi];
+      if(!o||!o.n){ h+='<td>—</td><td></td><td></td><td></td><td></td>'; return; }
+      h+=`<td>${o.n}</td><td>${o.act.toFixed(1)}</td><td>${o.pr.toFixed(1)}</td><td class="sw">${fpp(o.d)} <span style="color:var(--mut)">(${o.se.toFixed(1)})</span></td><td>${(()=>{ const e=Math.round(o.extra)||0; return (e>=0?'+':'')+e.toLocaleString(); })()} of ${Math.round(o.K).toLocaleString()}</td>`; });
+    h+='</tr>';
+  });
+  h+='</table>';
+  h+=`<div class="notice">${labs.map((l,i)=>`${l}: local schools are those in ${localText(cfgs[i].campus)}`).join('; ')}.</div>`;
+  d3.select('#grptable').html(h);
+}
+
+function schoolBox(FA,FB,vars){
+  const box=d3.select('#schoolbox');
+  if(!state.pick){ box.html('<h3>School</h3><div class="empty">Click a dot in either chart, or find a school by name above.</div>'); return; }
+  const P=state.pick.panel==='A'?{F:FA,cfg:state.A,lab:'left'}:{F:FB,cfg:state.B,lab:'right'};
+  const F=P.F;
+  const nm=NAMES.get(state.pick.ceeb)||'';
+  if(!F||!F.ok){ box.html(`<h3>School</h3><h4>${nm}</h4><div class="empty">No model in that chart.</div>`); return; }
+  const i=F.use.findIndex(r=>r[CI.ceeb]===state.pick.ceeb);
+  if(i<0){ box.html(`<h3>School</h3><h4>${nm}</h4><div class="empty">That school is not in the ${P.lab} chart’s model: it has fewer than 30 usable applicants to ${P.cfg.campus} in ${DATA.eras[P.cfg.era]}, or it is missing one of the selected variables. Click another dot.</div>${otherLine(FA,FB)}`); return; }
+  const r=F.use[i], pred=F.pred[i], lin=F.model==='lin';
+  let h=`<h3>School — ${P.lab} chart</h3><h4>${r[CI.name]}</h4>
+  <div class="meta">${r[CI.city]||''} · ${r[CI.county]?r[CI.county]+' County · ':''}school code ${r[CI.ceeb]} · ${P.cfg.campus}, ${DATA.eras[P.cfg.era]} · ${r[CI.A].toLocaleString()} applicants${F.fitOn==='out'&&r[CI.local]===1?' · predicted, not fitted':''}</div>
+  <div class="big3"><div><div class="k">actual</div><div class="n">${r[CI.adm].toFixed(1)}%</div></div>
+  <div><div class="k">predicted</div><div class="n">${pred.toFixed(1)}%</div></div>
+  <div><div class="k">difference</div><div class="n">${(r[CI.adm]-pred)>=0?'+':''}${(r[CI.adm]-pred).toFixed(1)}</div></div></div>
+  <table><tr><td style="color:var(--mut)">${lin?'base rate':'base (log-odds)'}</td><td></td><td>${lin?F.beta[0].toFixed(1):F.beta[0].toFixed(2)}</td></tr>`;
+  const x=F.row(r);
+  F.S.forEach((s,j)=>{
+    const val=s.get(r), z=x[j+1], c=F.beta[j+1]*z;
+    const vs=val==null?'—':(s.derived?+val.toFixed(3):val);
+    h+=`<tr><td>${s.label}</td><td style="color:var(--mut)">${s.bin?(val?'yes':'no'):`${vs} (z ${z>=0?'+':''}${z.toFixed(2)})`}</td><td>${c>=0?'+':''}${c.toFixed(lin?1:2)}</td></tr>`;
+  });
+  if(lin) h+=`<tr><td><b>predicted</b></td><td></td><td><b>${pred.toFixed(1)}%</b></td></tr></table>`;
+  else { const tot=d3.sum(x.map((v,j)=>v*F.beta[j]));
+    h+=`<tr><td>sum (log-odds)</td><td></td><td>${tot.toFixed(2)}</td></tr><tr><td><b>predicted</b></td><td></td><td><b>${pred.toFixed(1)}%</b></td></tr></table>`; }
+  h+=`<div class="notice">Right column: each variable's contribution to the prediction (its coefficient × the school's
+  z-score${F.S.some(s=>s.bin)?', or × 1 for a yes on the indicator':''})${lin?', in percentage points':', in log-odds'}. “z” is the school's distance from the weighted-average school, in standard deviations.</div>`;
+  h+=otherLine(FA,FB);
+  box.html(h);
+}
+function otherLine(FA,FB){
+  const O=state.pick.panel==='A'?{F:FB,cfg:state.B,lab:'right'}:{F:FA,cfg:state.A,lab:'left'};
+  if(!O.F||!O.F.ok) return '';
+  const oi=O.F.use.findIndex(x=>x[CI.ceeb]===state.pick.ceeb); if(oi<0) return '';
+  const orow=O.F.use[oi];
+  return `<div class="notice" style="margin-top:8px">Same school in the ${O.lab} chart (${O.cfg.campus}, ${DATA.eras[O.cfg.era]}): actual ${orow[CI.adm].toFixed(1)}%, predicted ${O.F.pred[oi].toFixed(1)}%.</div>`;
+}
+
+function hints(FA, rowsA, vars){
+  VARS.forEach(v=>{
+    const el=d3.select('#hint-'+v); if(el.empty()) return;
+    if(state.sel.has(v)||(state.fitOn==='out'&&INAREA.has(v))){ el.text('').classed('big',false); return; }
+    if(!FA.ok){ el.text(''); return; }
+    if(v==='gpacurve'&&!state.sel.has('appgpa')){ el.text('').classed('big',false); return; }
+    const F2=fit(rowsA, vars.concat([v]));
+    if(!F2.ok){ el.text('—').classed('big',false); return; }
+    const Fb=fit(F2.use, vars);
+    const d=F2.r2-(Fb.ok?Fb.r2:0);
+    el.text(fpp(d,3)).classed('big', d>=0.02);
+  });
+}
+
+// ---------- find a school ----------
+const NAMES=new Map(), FINDKEYS=new Map();
+Object.keys(DATA.cells).forEach(key=>DATA.cells[key].forEach(r=>{
+  if(!NAMES.has(r[CI.ceeb])){ NAMES.set(r[CI.ceeb],r[CI.name]); FINDKEYS.set(`${r[CI.name]} (${r[CI.city]||''})`,r[CI.ceeb]); } }));
+d3.select('#schoollist').selectAll('option').data([...FINDKEYS.keys()].sort()).join('option').attr('value',d=>d);
+document.getElementById('find').addEventListener('change',function(){
+  const c=FINDKEYS.get(this.value); if(c){ state.pick={ceeb:c,panel:'A'}; refreshPick(); } });
+
+function curVars(){ return VARS.filter(v=>state.sel.has(v)&&!(state.fitOn==='out'&&INAREA.has(v))); }
+function update(){
+  const vars=curVars();
+  const rowsA=DATA.cells[state.A.campus+'|'+state.A.era]||[];
+  const rowsB=DATA.cells[state.B.campus+'|'+state.B.era]||[];
+  const FA=vars.length?fit(rowsA,vars):{ok:false,n:rowsA.length};
+  const FB=vars.length?fit(rowsB,vars):{ok:false,n:rowsB.length};
+  drawPanel(PA,FA); drawPanel(PB,FB);
+  coefTable(FA,FB,vars); grpTable(FA,FB); schoolBox(FA,FB,vars); hints(FA,rowsA,vars);
+  window.UCPRED={FA,FB,state,fit,groupSummary,CI,DATA};
+}
+syncChecks(); update();
+})();
+</script>
+</body>
+</html>
